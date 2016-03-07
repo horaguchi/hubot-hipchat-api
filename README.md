@@ -1,3 +1,7 @@
+# Hubot adapter for HipChat using their API
+
+If you need a Hubot adapter and can connect to the HipChat using XMPP, use [HipChat's adapter](https://github.com/hipchat/hubot-hipchat). If not and you can integrate with HipChat's WebHooks, you should create a new adapter that uses those (they're faster and less chatty). But if find yourself needing to run Hubot on a server where you can hit HipChat's API, can't handle webhooks, and can't talk to XMPP - then this is for you.
+
 ## Setup
 
 These environment variables must be set:
@@ -27,10 +31,10 @@ To develop locally:
 https://github.com/npm/npm/issues/5875
 (I ended up doing this https://github.com/npm/npm/issues/5875#issuecomment-146505338)
 
-# Hubot adapter for HipChat using their API
+### Relevant resources
 
-https://confluence.atlassian.com/hipchatkb/using-bots-in-hipchat-753404057.html
-https://github.com/hipchat/hubot-hipchat
-https://github.com/hipchat/hubot-hipchat/issues/271
-https://www.hipchat.com/docs/apiv2
-https://github.com/charltoons/hipchatter
+* https://confluence.atlassian.com/hipchatkb/using-bots-in-hipchat-753404057.html
+* https://github.com/hipchat/hubot-hipchat
+* https://github.com/hipchat/hubot-hipchat/issues/271
+* https://www.hipchat.com/docs/apiv2
+* https://github.com/charltoons/hipchatter
