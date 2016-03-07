@@ -2,9 +2,9 @@
   "name": "hubot-hipchat-api",
   "version": "0.0.1",
   "description": "A Hubot adapter for HipChat using the HipChat v2 API",
-  "main": "index.js",
+  "main": "src/hipchat-api.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "semistandard"
   },
   "repository": {
     "type": "git",
@@ -14,18 +14,21 @@
     "hubot",
     "hipchat"
   ],
-  "author": "Eric Caron",
+  "author": "Eric Caron, Dan Flettre",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ecaron/hubot-hipchat-api/issues"
   },
   "homepage": "https://github.com/ecaron/hubot-hipchat-api#readme",
   "dependencies": {
+    "hipchatter": "^0.2.0",
+    "url-regex": "^3.1.0"
   },
   "peerDependencies": {
     "hubot": ">=2.0"
   },
   "devDependencies": {
-    "coffee-script": ">=1.2.0"
+    "coffee-script": ">=1.2.0",
+    "semistandard": "^7.0.5"
   }
 }
