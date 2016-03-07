@@ -6,7 +6,6 @@ const urlRegex = require('url-regex');
 const exactUrl = urlRegex({exact: true});
 
 const Hipchatter = require('hipchatter');
-// const debug = require('debug')('hubot-hipchat-api');
 
 function isUrlToImage (txt) {
   txt = txt.toLowerCase();
