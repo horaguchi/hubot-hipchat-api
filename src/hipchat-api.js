@@ -37,7 +37,10 @@ class HipChatApi extends Adapter {
 
       roomlist.split(',').forEach((r) => {
         this.lastMessageId[r.trim()] = null;
-        this.monitorRoom(r);
+        this.initializeRoom(r, (err, resp) => {
+          if (err) throw err;
+          this.monitorRoom(r);
+        });
       });
     });
   }
