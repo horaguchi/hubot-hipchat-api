@@ -12,6 +12,9 @@ HUBOT_HIPCHAT_API_ENDPOINT="http://my-private-hipchat.com/v2";
 
 # comma separated list of one or many rooms (just do one for now)
 HUBOT_HIPCHAT_API_ROOMS="someroom";
+
+# Message to send to the room at startup. Defaults to "Ready!"
+HUBOT_HIPCHAT_API_CONNECT_MSG="Awaiting Orders!"
 ```
 
 ## Developing

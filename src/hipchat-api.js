@@ -13,7 +13,7 @@ function isUrlToImage (txt) {
     txt.endsWith('.jpg') ||
     txt.endsWith('.jpeg') ||
     txt.endsWith('.gif')
-  )
+  );
 }
 
 class HipChatApi extends Adapter {
@@ -25,6 +25,7 @@ class HipChatApi extends Adapter {
     let token = process.env.HUBOT_HIPCHAT_API_TOKEN;
     let endpoint = process.env.HUBOT_HIPCHAT_API_ENDPOINT;
     let roomlist = process.env.HUBOT_HIPCHAT_API_ROOMS;
+    let readyMsg = process.env.HUBOT_HIPCHAT_API_CONNECT_MSG || 'Ready!';
 
     this.client = new Hipchatter(token, endpoint);
 
@@ -40,6 +41,7 @@ class HipChatApi extends Adapter {
         this.initializeRoom(r, (err, resp) => {
           if (err) throw err;
           this.monitorRoom(r);
+          this.send({room: r}, readyMsg);
         });
       });
     });
@@ -88,7 +90,7 @@ class HipChatApi extends Adapter {
   }
 
   send (envelope, message) {
-    if(isUrlToImage(message)) return this.sendImage(envelope, message);
+    if (isUrlToImage(message)) return this.sendImage(envelope, message);
     let msg = message.substring(0, 1000);
 
     let path = `room/${envelope.room}/message`;
@@ -107,8 +109,7 @@ class HipChatApi extends Adapter {
 
   sendImage (envelope, message) {
     // send images as a notification to make them the best
-    this.client.notify(envelope.room,
-    {
+    this.client.notify(envelope.room, {
       message: `<img src="${message}"/>`,
       color: 'gray',
       token: this.session.access_token
