@@ -131,7 +131,9 @@ class HipChatApi extends Adapter {
     this.emit('connected');
 
     this.on('message', (msg, room) => {
-      if (msg.from === this.session.owner.id) return; // don't process own msg
+      this.robot.logger.debug('msg.from', msg.from);
+      this.robot.logger.debug('session owner', this.session.owner);
+      if (msg.from.id === this.session.owner.id) return; // don't process own msg
       if (msg.type === 'notification') return;
 
       this.robot.logger.debug('Processing message: %j', msg);
