@@ -2,17 +2,21 @@
 const Adapter = require('hubot/src/adapter');
 const Msgs = require('hubot/src/message');
 const TextMessage = Msgs.TextMessage;
+const url = require('url');
 const urlRegex = require('url-regex');
 const exactUrl = urlRegex({exact: true});
 
 const Hipchatter = require('hipchatter');
 
 function isUrlToImage (txt) {
-  txt = txt.toLowerCase();
-  return exactUrl.test(txt) && (
-    txt.endsWith('.jpg') ||
-    txt.endsWith('.jpeg') ||
-    txt.endsWith('.gif')
+  if (!exactUrl.test(txt)) {
+    return false;
+  }
+  let path = url.parse(txt.toLowerCase()).pathname;
+  return (
+    path.endsWith('.jpg') ||
+    path.endsWith('.jpeg') ||
+    path.endsWith('.gif')
   );
 }
 
@@ -26,6 +30,9 @@ class HipChatApi extends Adapter {
     let endpoint = process.env.HUBOT_HIPCHAT_API_ENDPOINT;
     let roomlist = process.env.HUBOT_HIPCHAT_API_ROOMS;
     let readyMsg = process.env.HUBOT_HIPCHAT_API_CONNECT_MSG || 'Ready!';
+    let minScanDelay = process.env.HUBOT_HIPCHAT_API_MIN_SCAN || .5;
+    let maxScanDelay = process.env.HUBOT_HIPCHAT_API_MAX_SCAN || 10;
+    let currentScanDelay = process.env.HUBOT_HIPCHAT_API_DELAY_SCAN || 5;
 
     this.client = new Hipchatter(token, endpoint);
 
