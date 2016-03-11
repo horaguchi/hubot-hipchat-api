@@ -1,7 +1,7 @@
 {
   "name": "hubot-hipchat-api",
-  "version": "0.0.2",
-  "description": "A Hubot adapter for HipChat using the HipChat v2 API",
+  "version": "0.1.0",
+  "description": "A Hubot adapter for HipChat using the HipChat v2 API and just polling",
   "main": "src/hipchat-api.js",
   "scripts": {
     "test": "semistandard"
@@ -22,7 +22,6 @@
   "homepage": "https://github.com/ecaron/hubot-hipchat-api#readme",
   "dependencies": {
     "async": "^1.5.2",
-    "hipchatter": "^0.2.0",
     "needle": "^1.0.0",
     "url-regex": "^3.1.0"
   },
