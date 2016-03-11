@@ -96,7 +96,6 @@ class HipChatApi extends Adapter {
   send (envelope, message) {
     if (isUrlToImage(message)) return this.sendImage(envelope, message);
     this.robot.logger.debug(message);
-    process.exit();
     let msg = message.substring(0, 1000);
 
     let path = `room/${envelope.room}/message`;
