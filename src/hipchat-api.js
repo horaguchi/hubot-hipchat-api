@@ -6,7 +6,7 @@ const url = require('url');
 const urlRegex = require('url-regex');
 const exactUrl = urlRegex({exact: true});
 
-const Hipchatter = require('hipchatter');
+const Hipchatter = require('../lib/hipchatter');
 
 function isUrlToImage (txt) {
   if (!exactUrl.test(txt)) {
@@ -30,17 +30,14 @@ class HipChatApi extends Adapter {
     let endpoint = process.env.HUBOT_HIPCHAT_API_ENDPOINT;
     let roomlist = process.env.HUBOT_HIPCHAT_API_ROOMS;
     let readyMsg = process.env.HUBOT_HIPCHAT_API_CONNECT_MSG || 'Ready!';
-    let minScanDelay = process.env.HUBOT_HIPCHAT_API_MIN_SCAN || .5;
-    let maxScanDelay = process.env.HUBOT_HIPCHAT_API_MAX_SCAN || 10;
-    let currentScanDelay = process.env.HUBOT_HIPCHAT_API_DELAY_SCAN || 5;
 
     this.client = new Hipchatter(token, endpoint);
 
     // fetch the oauth session info
-    this.client.request('get', `oauth/token/${token}`, (err, resp) => {
+    this.client.request('get', `oauth/token/${token}`, (err, response, body) => {
       if (err) throw err;
 
-      this.session = resp;
+      this.session = body;
       this.robot.logger.debug('%s is alive!', this.session.owner.name);
 
       roomlist.split(',').forEach((r) => {
@@ -69,7 +66,7 @@ class HipChatApi extends Adapter {
     let path = `room/${room}/history/latest`;
     let opts = {'max-results': 1};
 
-    this.client.request('get', path, opts, (err, history) => {
+    this.client.request('get', path, opts, (err, response, history) => {
       if (err) return cb(err);
       if (history.items.length < 1) return cb(null, []);
 
@@ -85,7 +82,7 @@ class HipChatApi extends Adapter {
 
     let path = `room/${room}/history/latest`;
     let opts = {'not-before': this.lastMessageId[room]};
-    this.client.request('get', path, opts, (err, history) => {
+    this.client.request('get', path, opts, (err, response, history) => {
       if (err) return cb(err);
       let items = history.items.slice(1); // slice off first message
 
@@ -98,6 +95,8 @@ class HipChatApi extends Adapter {
 
   send (envelope, message) {
     if (isUrlToImage(message)) return this.sendImage(envelope, message);
+    this.robot.logger.debug(message);
+    process.exit();
     let msg = message.substring(0, 1000);
 
     let path = `room/${envelope.room}/message`;
@@ -105,7 +104,7 @@ class HipChatApi extends Adapter {
     let opts = {
       message: msg
     };
-    this.client.request('post', path, opts, (err, resp) => {
+    this.client.request('post', path, opts, (err, response, body) => {
       if (err) return this.robot.logger.error(`Error sending message: ${err.message}`);
       this.robot.logger.debug('messsage sent!');
 
