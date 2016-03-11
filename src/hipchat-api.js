@@ -16,6 +16,7 @@ function isUrlToImage (txt) {
   return (
     path.endsWith('.jpg') ||
     path.endsWith('.jpeg') ||
+    path.endsWith('.png') ||
     path.endsWith('.gif')
   );
 }
