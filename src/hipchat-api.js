@@ -25,6 +25,7 @@ class HipChatApi extends Adapter {
     super(robot);
     this.robot.logger.info('constructor');
     this.lastMessageId = {};
+    this.sendDelay = 5;
 
     let token = process.env.HUBOT_HIPCHAT_API_TOKEN;
     let endpoint = process.env.HUBOT_HIPCHAT_API_ENDPOINT;
@@ -36,6 +37,9 @@ class HipChatApi extends Adapter {
     // fetch the oauth session info
     this.client.request('get', `oauth/token/${token}`, (err, response, body) => {
       if (err) throw err;
+      if (response.statusCode !== 200) {
+        throw new Error('Expected status code to be 200, got ' + response.statusCode);
+      }
 
       this.session = body;
       this.robot.logger.debug('%s is alive!', this.session.owner.name);
@@ -44,21 +48,23 @@ class HipChatApi extends Adapter {
         this.lastMessageId[r.trim()] = null;
         this.initializeRoom(r, (err, resp) => {
           if (err) throw err;
-          this.monitorRoom(r);
           this.send({room: r}, readyMsg);
+          setTimeout(() => {
+            this.monitorRoom(r);
+          }, 1000);
         });
       });
     });
   }
 
   monitorRoom (room) {
-    setTimeout(() => {
-      this.fetchLatestMessages(room, (err, items) => {
-        if (err) throw err;
-        items.forEach((i) => this.emit('message', i, room));
+    this.fetchLatestMessages(room, (err, items) => {
+      if (err) throw err;
+      items.forEach((i) => this.emit('message', i, room));
+      setTimeout(() => {
         this.monitorRoom(room);
-      });
-    }, 4000);
+      }, this.sendDelay * 1000);
+    });
   }
 
   initializeRoom (room, cb) {
@@ -68,6 +74,14 @@ class HipChatApi extends Adapter {
 
     this.client.request('get', path, opts, (err, response, history) => {
       if (err) return cb(err);
+      if (response.statusCode >= 400) {
+        this.robot.logger.debug('Got status code %d for initializeRoom, sleeping 1s then trying again', response.statusCode);
+        setTimeout(() => {
+          this.initializeRoom(room, cb);
+        }, 1000);
+        return;
+      }
+
       if (history.items.length < 1) return cb(null, []);
 
       this.robot.logger.debug('setting last mesage id to %s', history.items[0].id);
@@ -84,6 +98,14 @@ class HipChatApi extends Adapter {
     let opts = {'not-before': this.lastMessageId[room]};
     this.client.request('get', path, opts, (err, response, history) => {
       if (err) return cb(err);
+      if (response.statusCode >= 400) {
+        this.robot.logger.debug('Got status code %d for fetchLatestMessages, sleeping 1s then trying again', response.statusCode);
+        setTimeout(() => {
+          this.fetchLatestMessages(room, cb);
+        }, 1000);
+        return;
+      }
+
       let items = history.items.slice(1); // slice off first message
 
       this.robot.logger.debug('fetched latest messages for room %s: %s', room, items.length);
@@ -95,19 +117,34 @@ class HipChatApi extends Adapter {
 
   send (envelope, message) {
     if (isUrlToImage(message)) return this.sendImage(envelope, message);
-    this.robot.logger.debug(message);
-    let msg = message.substring(0, 1000);
+
+    let splitPoint = 1000;
+    let msg = message.substring(0, splitPoint);
+    if (msg.length === 1000) {
+      let idealSplit = msg.lastIndexOf('\n');
+      if (idealSplit > 900) {
+        splitPoint = idealSplit;
+        msg = msg.substring(0, splitPoint);
+      }
+    }
 
     let path = `room/${envelope.room}/message`;
-
     let opts = {
       message: msg
     };
     this.client.request('post', path, opts, (err, response, body) => {
       if (err) return this.robot.logger.error(`Error sending message: ${err.message}`);
+      if (response.statusCode >= 400) {
+        this.robot.logger.debug('Got status code %d for send, sleeping 1s then trying again', response.statusCode);
+        setTimeout(() => {
+          this.send(envelope, message);
+        }, 1000);
+        return;
+      }
+
       this.robot.logger.debug('messsage sent!');
 
-      let remainingMsg = message.slice(1000);
+      let remainingMsg = message.slice(splitPoint);
       if (remainingMsg.length > 0) this.send(envelope, remainingMsg);
     });
   }
@@ -115,11 +152,19 @@ class HipChatApi extends Adapter {
   sendImage (envelope, message) {
     // send images as a notification to make them the best
     this.client.notify(envelope.room, {
-      message: `<img src="${message}"/>`,
+      message: `<img src="${message}" style="height:200px"/>`, // I wish we could use max-height...
       color: 'gray',
       token: this.session.access_token
-    }, (err) => {
-      if (err == null) this.robot.logger.info('image sent successfully');
+    }, (err, response) => {
+      if (err) return this.robot.logger.error(`Error sending message: ${err.message}`);
+      if (response.statusCode >= 400) {
+        this.robot.logger.debug('Got status code %d for sendImage, sleeping 1s then trying again', response.statusCode);
+        setTimeout(() => {
+          this.sendImage(envelope, message);
+        }, 1000);
+        return;
+      }
+      this.robot.logger.info('image sent successfully');
     });
   }
 
@@ -136,8 +181,6 @@ class HipChatApi extends Adapter {
     this.emit('connected');
 
     this.on('message', (msg, room) => {
-      this.robot.logger.debug('msg.from', msg.from);
-      this.robot.logger.debug('session owner', this.session.owner);
       if (msg.from.id === this.session.owner.id) return; // don't process own msg
       if (msg.type === 'notification') return;
 
