@@ -58,9 +58,32 @@ class HipChatApi extends Adapter {
   }
 
   monitorRoom (room) {
-    this.fetchLatestMessages(room, (err, items) => {
+    this.fetchLatestMessages(room, (err, items, headers) => {
       if (err) throw err;
       items.forEach((i) => this.emit('message', i, room));
+
+      // Under default HipChat settings, if we use 100% of our calls for fetching messages
+      // then we can make 1 call every 3 seconds (https://www.hipchat.com/docs/apiv2/rate_limiting)
+      // We try to listen more frequently when the room is chatty, and less when its quiet, to
+      // conserve our requests.
+      let callRemaining = parseInt(headers['x-ratelimit-remaining'], 10);
+      let callLimit = parseInt(headers['x-ratelimit-limit'], 10);
+      let callReset = parseInt(headers['x-ratelimit-reset'], 10);
+      let currentTime = Math.round((new Date()).getTime() / 1000);
+      let idealDelay = (callReset - currentTime) / (callRemaining * .75); // seconds-per-call, reserving 25% of our calls for sends
+
+      if (items.length === 0) {
+        this.sendDelay = Math.min(this.sendDelay * 1.5, 10);
+      } else {
+        this.sendDelay = 1;
+      }
+
+      // If we're too far from the ideal, give it a nudge
+      if (idealDelay * 3 < this.sendDelay) {
+        this.robot.logger.debug('Nudging room delay. Ideal is %d, delay was %d, now is %d', idealDelay, this.sendDelay, this.sendDelay * 2);
+        this.sendDelay = this.sendDelay * 2;
+      }
+
       setTimeout(() => {
         this.monitorRoom(room);
       }, this.sendDelay * 1000);
@@ -111,7 +134,7 @@ class HipChatApi extends Adapter {
       this.robot.logger.debug('fetched latest messages for room %s: %s', room, items.length);
       if (items.length > 0) this.lastMessageId[room] = items[0].id;
 
-      return cb(null, items);
+      return cb(null, items, response.headers);
     });
   }
 
