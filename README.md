@@ -12,7 +12,7 @@ These environment variables must be set:
 HUBOT_HIPCHAT_API_TOKEN="somestringoflettersandnumbers";
 
 # API endppint
-HUBOT_HIPCHAT_API_ENDPOINT="http://my-private-hipchat.com/v2";
+HUBOT_HIPCHAT_API_ENDPOINT="http://my-private-hipchat.com/v2/";
 
 # comma separated list of one or many rooms (just do one for now)
 HUBOT_HIPCHAT_API_ROOMS="someroom";
