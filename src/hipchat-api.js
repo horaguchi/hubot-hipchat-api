@@ -30,10 +30,11 @@ class HipChatApi extends Adapter {
 
     let token = process.env.HUBOT_HIPCHAT_API_TOKEN;
     let endpoint = process.env.HUBOT_HIPCHAT_API_ENDPOINT;
+    let proxy = process.env.HUBOT_HIPCHAT_API_PROXY;
     let roomlist = process.env.HUBOT_HIPCHAT_API_ROOMS;
     let readyMsg = process.env.HUBOT_HIPCHAT_API_CONNECT_MSG || 'Ready!';
 
-    this.client = new Hipchatter(token, endpoint);
+    this.client = new Hipchatter(token, endpoint, proxy);
 
     // fetch the oauth session info
     this.client.request('get', `oauth/token/${token}`, (err, response, body) => {
