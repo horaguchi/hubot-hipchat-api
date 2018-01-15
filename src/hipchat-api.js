@@ -98,7 +98,13 @@ class HipChatApi extends Adapter {
     let opts = {'max-results': 1};
 
     this.client.request('get', path, opts, (err, response, history) => {
-      if (err) return cb(err);
+      if (err) {
+        this.robot.logger.debug('Got connection error %s for initializeRoom, sleeping 1s then trying again', err.message);
+        setTimeout(() => {
+          this.initializeRoom(room, cb);
+        }, 1000);
+        return cb(err);
+      }
       if (response.statusCode >= 400) {
         this.robot.logger.debug('Got status code %d for initializeRoom, sleeping 1s then trying again', response.statusCode);
         setTimeout(() => {
@@ -122,7 +128,13 @@ class HipChatApi extends Adapter {
     let path = `room/${room}/history/latest`;
     let opts = {'not-before': this.lastMessageId[room]};
     this.client.request('get', path, opts, (err, response, history) => {
-      if (err) return cb(err);
+      if (err) {
+        this.robot.logger.debug('Got connection error %s for fetchLatestMessages, sleeping 1s then trying again', err.message);
+        setTimeout(() => {
+          this.fetchLatestMessages(room, cb);
+        }, 1000);
+        return cb(err);
+      }
       if (response.statusCode >= 400) {
         this.robot.logger.debug('Got status code %d for fetchLatestMessages, sleeping 1s then trying again', response.statusCode);
         setTimeout(() => {
@@ -158,7 +170,13 @@ class HipChatApi extends Adapter {
       message: msg
     };
     this.client.request('post', path, opts, (err, response, body) => {
-      if (err) return this.robot.logger.error(`Error sending message: ${err.message}`);
+      if (err) {
+        this.robot.logger.debug('Got connection error %s for send, sleeping 1s then trying again', err.message);
+        setTimeout(() => {
+          this.send(envelope, message);
+        }, 1000);
+        return this.robot.logger.error(`Error sending message: ${err.message}`);
+      }
       if (response.statusCode >= 400) {
         this.robot.logger.debug('Got status code %d for send, sleeping 1s then trying again', response.statusCode);
         setTimeout(() => {
@@ -181,7 +199,13 @@ class HipChatApi extends Adapter {
       color: 'gray',
       token: this.session.access_token
     }, (err, response) => {
-      if (err) return this.robot.logger.error(`Error sending message: ${err.message}`);
+      if (err) {
+        this.robot.logger.debug('Got connection error %s for sendImage, sleeping 1s then trying again', err.message);
+        setTimeout(() => {
+          this.sendImage(envelope, message);
+        }, 1000);
+        return this.robot.logger.error(`Error sending message: ${err.message}`);
+      }
       if (response.statusCode >= 400) {
         this.robot.logger.debug('Got status code %d for sendImage, sleeping 1s then trying again', response.statusCode);
         setTimeout(() => {
